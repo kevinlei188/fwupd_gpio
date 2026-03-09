@@ -43,6 +43,9 @@ G_DEFINE_TYPE(FuParadeUsbhubDevice, fu_parade_usbhub_device, FU_TYPE_USB_DEVICE)
 #define FU_PARADE_USBHUB_DEVICE_SPI_RETRY_COUNT 100
 #define FU_PARADE_USBHUB_DEVICE_SPI_RETRY_DELAY 50 /* ms */
 
+#define FU_PARADE_USBHUB_DEVICE_GPIO_CONTROL_ENABLE   0x582d
+#define FU_PARADE_USBHUB_DEVICE_GPIO_CONTROL_REGISTER 0x5824
+
 static void
 fu_parade_usbhub_device_to_string(FuDevice *device, guint idt, GString *str)
 {
@@ -1146,7 +1149,7 @@ fu_parade_usbhub_device_write_firmware(FuDevice *device,
 	g_autoptr(GByteArray) blob = NULL;
 	guint32 checksum;
 	guint32 checksum_new;
-
+	guint8 val;
 	/* progress */
 	fu_progress_set_id(progress, G_STRLOC);
 	fu_progress_add_step(progress, FWUPD_STATUS_DEVICE_ERASE, 33, NULL);
@@ -1195,6 +1198,21 @@ fu_parade_usbhub_device_write_firmware(FuDevice *device,
 			    checksum_new,
 			    checksum);
 		return FALSE;
+	}
+	if (self->chip == FU_PARADE_USBHUB_CHIP_DELL)
+	{
+		val = 0x40;
+		if (!fu_parade_usbhub_device_mmio_write_u8(self,
+							   FU_PARADE_USBHUB_DEVICE_GPIO_CONTROL_REGISTER,
+						           val,
+						           error))
+			return FALSE;
+		val = 0x01;
+		if (!fu_parade_usbhub_device_mmio_write_u8(self,
+						           FU_PARADE_USBHUB_DEVICE_GPIO_CONTROL_ENABLE,
+						           val,
+						           error))
+			return FALSE;
 	}
 	fu_progress_step_done(progress);
 
