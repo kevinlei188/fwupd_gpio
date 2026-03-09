@@ -1149,7 +1149,7 @@ fu_parade_usbhub_device_write_firmware(FuDevice *device,
 	g_autoptr(GByteArray) blob = NULL;
 	guint32 checksum;
 	guint32 checksum_new;
-	guint8 val;
+	
 	/* progress */
 	fu_progress_set_id(progress, G_STRLOC);
 	fu_progress_add_step(progress, FWUPD_STATUS_DEVICE_ERASE, 33, NULL);
@@ -1201,6 +1201,7 @@ fu_parade_usbhub_device_write_firmware(FuDevice *device,
 	}
 	if (self->chip == FU_PARADE_USBHUB_CHIP_DELL)
 	{
+		guint8 val;
 		val = 0x40;
 		if (!fu_parade_usbhub_device_mmio_write_u8(self,
 							   FU_PARADE_USBHUB_DEVICE_GPIO_CONTROL_REGISTER,
