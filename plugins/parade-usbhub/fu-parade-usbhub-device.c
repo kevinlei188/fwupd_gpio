@@ -46,6 +46,8 @@ G_DEFINE_TYPE(FuParadeUsbhubDevice, fu_parade_usbhub_device, FU_TYPE_USB_DEVICE)
 #define FU_PARADE_USBHUB_DEVICE_GPIO_CONTROL_ENABLE   0x582d
 #define FU_PARADE_USBHUB_DEVICE_GPIO_CONTROL_REGISTER 0x5824
 
+#define FU_PARADE_USBHUB_DEVICE_FLAG_USE_GPIO_ENABLE "use-gpio-enable"
+
 static void
 fu_parade_usbhub_device_to_string(FuDevice *device, guint idt, GString *str)
 {
@@ -1149,7 +1151,7 @@ fu_parade_usbhub_device_write_firmware(FuDevice *device,
 	g_autoptr(GByteArray) blob = NULL;
 	guint32 checksum;
 	guint32 checksum_new;
-	
+
 	/* progress */
 	fu_progress_set_id(progress, G_STRLOC);
 	fu_progress_add_step(progress, FWUPD_STATUS_DEVICE_ERASE, 33, NULL);
@@ -1199,20 +1201,22 @@ fu_parade_usbhub_device_write_firmware(FuDevice *device,
 			    checksum);
 		return FALSE;
 	}
-	if (self->chip == FU_PARADE_USBHUB_CHIP_DELL)
-	{
+	if (fu_device_has_private_flag(FU_DEVICE(self),
+				       FU_PARADE_USBHUB_DEVICE_FLAG_USE_GPIO_ENABLE)) {
 		guint8 val;
 		val = 0x40;
-		if (!fu_parade_usbhub_device_mmio_write_u8(self,
-							   FU_PARADE_USBHUB_DEVICE_GPIO_CONTROL_REGISTER,
-						           val,
-						           error))
+		if (!fu_parade_usbhub_device_mmio_write_u8(
+			self,
+			FU_PARADE_USBHUB_DEVICE_GPIO_CONTROL_REGISTER,
+			val,
+			error))
 			return FALSE;
 		val = 0x01;
-		if (!fu_parade_usbhub_device_mmio_write_u8(self,
-						           FU_PARADE_USBHUB_DEVICE_GPIO_CONTROL_ENABLE,
-						           val,
-						           error))
+		if (!fu_parade_usbhub_device_mmio_write_u8(
+			self,
+			FU_PARADE_USBHUB_DEVICE_GPIO_CONTROL_ENABLE,
+			val,
+			error))
 			return FALSE;
 	}
 	fu_progress_step_done(progress);
@@ -1274,6 +1278,8 @@ fu_parade_usbhub_device_init(FuParadeUsbhubDevice *self)
 	fu_device_add_flag(FU_DEVICE(self), FWUPD_DEVICE_FLAG_SIGNED_PAYLOAD);
 	fu_device_add_flag(FU_DEVICE(self), FWUPD_DEVICE_FLAG_SELF_RECOVERY);
 	fu_device_add_flag(FU_DEVICE(self), FWUPD_DEVICE_FLAG_DUAL_IMAGE);
+	fu_device_register_private_flag(FU_DEVICE(self),
+					FU_PARADE_USBHUB_DEVICE_FLAG_USE_GPIO_ENABLE);
 	fu_device_add_request_flag(FU_DEVICE(self), FWUPD_REQUEST_FLAG_ALLOW_GENERIC_MESSAGE);
 }
 

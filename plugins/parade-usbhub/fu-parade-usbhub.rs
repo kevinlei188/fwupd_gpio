@@ -44,5 +44,4 @@ enum FuParadeUsbhubChip {
     Unknown,
     Ps5512,
     Ps188,
-    DELL,
 }
